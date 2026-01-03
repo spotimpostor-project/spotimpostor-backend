@@ -4,9 +4,12 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -16,30 +19,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.UUID;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "palabras")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Usuario {
+public class Palabra {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID id;
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Long id;
 
-  @Column(length = 20, nullable = false, unique = true)
-  private String nombre;
+  @Column(length = 30, nullable = false)
+  private String palabra;
 
-  @Column(length = 35, nullable = false, unique = true)
-  private String correo;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "id_coleccion", nullable = false)
+  private Coleccion coleccion;
 
-  @Column(length = 255, nullable = false)
-  private String password;
-
-  @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  private List<ColeccionUsuario> coleccionesUsuario;
+  @OneToMany(mappedBy = "palabra", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  private List<PalabraPista> pistas;
 }
