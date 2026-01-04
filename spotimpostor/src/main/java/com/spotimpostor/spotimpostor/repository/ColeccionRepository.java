@@ -17,4 +17,7 @@ public interface ColeccionRepository extends JpaRepository<Coleccion, Long> {
   @Query("SELECT c FROM Coleccion c JOIN c.coleccionUsuario cu WHERE cu.codigo = :codigo")
   Optional<Coleccion> findByCodigo(@Param("codigo") String codigo);
 
+  @Query("SELECT c FROM Coleccion c WHERE c.nombre = :nombre")
+  Optional<Coleccion> findByNombre(@Param("nombre") String nombre);
+
 }
