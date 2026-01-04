@@ -36,7 +36,7 @@ public class CreatePartidaRequest {
   private Integer cantidadImpostores;
 
   @Email
-  @NotBlank(message = "Correo de usuario obligatorio")
+  //@NotBlank(message = "Correo de usuario obligatorio")
   private String correo;
 
   @NotEmpty(message = "Lista de jugadores obligatoria")

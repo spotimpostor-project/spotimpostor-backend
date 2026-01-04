@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,8 +48,16 @@ public class PartidaService {
             coleccionRepository.findByCodigo(dtoRequest.getCodigoColeccion())
                     .orElseThrow(() -> new NotFoundException("No se encontró la colección"));
 
+    Usuario usuario = null;
+
+    if (!Objects.isNull(dtoRequest.getCorreo())) {
+      usuario = usuarioRepository.findByCorreo(dtoRequest.getCorreo()).
+              orElseThrow(() -> new NotFoundException("No se encontró usuario con correo: "+dtoRequest.getCorreo()));
+    }
+    /*
     Usuario usuario = usuarioRepository.findByCorreo(dtoRequest.getCorreo()).
             orElseThrow(() -> new NotFoundException("No se encontró usuario con correo: "+dtoRequest.getCorreo()));
+     */
 
     ModoPartida modo = modoPartidaRepository.findByModo(dtoRequest.getModo())
             .orElseThrow(() -> new NotFoundException("No se encontró el modo de juego: "+dtoRequest.getModo()));
