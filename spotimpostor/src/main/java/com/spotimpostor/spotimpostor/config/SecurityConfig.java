@@ -32,11 +32,16 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
 
     // Aquí pones tu URL de Vercel y mantienes localhost para pruebas
+    /*
     configuration.setAllowedOrigins(Arrays.asList(
             "https://spotimpostor-frontend.vercel.app/",
             "http://localhost:5173",
             "http://localhost:3000"
     ));
+
+     */
+
+    configuration.setAllowedOrigins((List.of("*")));
 
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
