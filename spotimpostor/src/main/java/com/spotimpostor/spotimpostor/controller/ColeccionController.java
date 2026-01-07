@@ -38,6 +38,9 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta de colecciones exitosa", "200", colecciones));
   }
 
+  //TODO
+  //MOSTRAR "MIS COLECCIONES" -> LOGICA DE LOGIN EN CASO CONTRARIO
+
   @GetMapping("/{codigo}")
   public ResponseEntity<ApiResponse<InfoColeccionPublicaResponse>> consultarDetalleColeccionUsuario(
     @PathVariable String codigo
