@@ -20,6 +20,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable) // Desactiva la protección contra ataques cruzados (obligatorio para Postman)
             .authorizeHttpRequests(auth -> auth
                     .anyRequest().permitAll() // LIBERA todas las rutas del proyecto
@@ -38,10 +39,9 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://localhost:3000"
     ));
-
      */
 
-    configuration.setAllowedOrigins((List.of("*")));
+    configuration.setAllowedOriginPatterns(List.of("*"));
 
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
