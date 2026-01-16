@@ -9,6 +9,8 @@ import com.spotimpostor.spotimpostor.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,9 +55,13 @@ public class ColeccionController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<InfoColeccionPublicaResponse>> registrar(
-    @Valid @RequestBody RegistrarColeccionRequest dtoRequest
+    @Valid @RequestBody RegistrarColeccionRequest dtoRequest,
+    Authentication authentication
   ) {
-    InfoColeccionPublicaResponse coleccionPublicaResponse = coleccionService.registerColeccion(dtoRequest);
+    //String correo = (authentication != null) ? authentication.getName() : null;
+    String correo = authentication.getName();
+
+    InfoColeccionPublicaResponse coleccionPublicaResponse = coleccionService.registerColeccion(dtoRequest, correo);
     return ResponseEntity.ok(new ApiResponse<>("Registro exitoso", "200", coleccionPublicaResponse));
   }
 

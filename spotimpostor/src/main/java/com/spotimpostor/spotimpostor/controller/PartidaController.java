@@ -8,6 +8,7 @@ import com.spotimpostor.spotimpostor.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,9 +25,11 @@ public class PartidaController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<List<InfoPartidaResponse>>> registrar (
-    @Valid @RequestBody CreatePartidaRequest dtoRequest
+    @Valid @RequestBody CreatePartidaRequest dtoRequest,
+    Authentication authentication
   ) {
-    List<InfoPartidaResponse> partidaResponseList = partidaService.registrarPartida(dtoRequest);
+    String correo = (authentication != null) ? authentication.getName() : null;
+    List<InfoPartidaResponse> partidaResponseList = partidaService.registrarPartida(dtoRequest, correo);
     return ResponseEntity.ok(new ApiResponse<>("Registro exitoso", "200", partidaResponseList));
   }
 

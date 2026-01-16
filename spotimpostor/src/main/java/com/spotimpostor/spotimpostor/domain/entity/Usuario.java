@@ -14,7 +14,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +29,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Usuario {
+public class Usuario implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -42,4 +46,43 @@ public class Usuario {
 
   @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<ColeccionUsuario> coleccionesUsuario;
+
+  // --- MÉTODOS OBLIGATORIOS DE USERDETAILS ---
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    // Por ahora, todos son usuarios básicos. Si luego añades roles, cámbialo aquí.
+    return List.of(new SimpleGrantedAuthority("USER"));
+  }
+
+  @Override
+  public String getUsername() {
+    // Spring Security necesita saber cuál es el identificador único (tu correo)
+    return correo;
+  }
+
+  @Override
+  public String getPassword() {
+    return password;
+  }
+
+  @Override
+  public boolean isAccountNonExpired() {
+    return true; // Cambiar a lógica real si manejas expiración de cuentas
+  }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return true; // Cambiar si manejas bloqueos por intentos fallidos
+  }
+
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true; // Cambiar si manejas activación por correo
+  }
 }

@@ -11,9 +11,11 @@ import java.util.List;
 public class RegistrarColeccionRequest {
   @NotBlank(message = "Nombre de coleccion obligatorio")
   private String nombreColeccion;
+  /*
   @Email
   @NotBlank(message = "Correo de usuario obligatorio")
   private String correoUsuario;
+  */
   @NotEmpty(message = "La lista de palabras no puede estar vacía")
   private List<String> palabras;
 }

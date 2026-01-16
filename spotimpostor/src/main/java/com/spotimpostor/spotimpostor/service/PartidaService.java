@@ -40,7 +40,7 @@ public class PartidaService {
   private final PalabraPistaRepository palabraPistaRepository;
 
   @Transactional
-  public List<InfoPartidaResponse> registrarPartida(CreatePartidaRequest dtoRequest) {
+  public List<InfoPartidaResponse> registrarPartida(CreatePartidaRequest dtoRequest, String correo) {
     Coleccion coleccion = (dtoRequest.getTipoColeccion() == TipoColeccion.GENERAL) ?
             coleccionRepository.findByNombre(dtoRequest.getNombreColeccion())
                     .orElseThrow(() -> new NotFoundException("No se encontró la colección"))
@@ -50,9 +50,9 @@ public class PartidaService {
 
     Usuario usuario = null;
 
-    if (!Objects.isNull(dtoRequest.getCorreo())) {
-      usuario = usuarioRepository.findByCorreo(dtoRequest.getCorreo()).
-              orElseThrow(() -> new NotFoundException("No se encontró usuario con correo: "+dtoRequest.getCorreo()));
+    if (!Objects.isNull(correo)) {
+      usuario = usuarioRepository.findByCorreo(correo).
+              orElseThrow(() -> new NotFoundException("No se encontró usuario con correo: "+correo));
     }
     /*
     Usuario usuario = usuarioRepository.findByCorreo(dtoRequest.getCorreo()).

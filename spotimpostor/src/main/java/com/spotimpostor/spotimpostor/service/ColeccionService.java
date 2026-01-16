@@ -54,10 +54,10 @@ public class ColeccionService {
   }
 
   @Transactional
-  public InfoColeccionPublicaResponse registerColeccion(RegistrarColeccionRequest dtoRequest) {
+  public InfoColeccionPublicaResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
 
-    Usuario usuario = usuarioRepository.findByCorreo(dtoRequest.getCorreoUsuario())
-            .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+dtoRequest.getCorreoUsuario()));
+    Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
+            .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
 
     Coleccion coleccion = mapper.buildColeccion(dtoRequest.getNombreColeccion());
 
