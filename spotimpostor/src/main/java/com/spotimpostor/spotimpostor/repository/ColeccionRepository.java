@@ -12,6 +12,10 @@ import java.util.Optional;
 
 @Repository
 public interface ColeccionRepository extends JpaRepository<Coleccion, Long> {
+
+  @Query("SELECT c.nombre FROM Coleccion c WHERE c.tipo = :tipo")
+  List<String> findNombresByTipo(@Param("tipo") TipoColeccion tipo);
+
   List<Coleccion> findByTipo(TipoColeccion tipoColeccion);
 
   @Query("SELECT c FROM Coleccion c JOIN c.coleccionUsuario cu WHERE cu.codigo = :codigo")

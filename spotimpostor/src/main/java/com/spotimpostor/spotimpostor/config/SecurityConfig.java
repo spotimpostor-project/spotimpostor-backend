@@ -35,6 +35,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/usuarios/auth/**").permitAll() // Login y Registro son libres
                     .requestMatchers("/api/modos-partida/**").permitAll()
+                    .requestMatchers("/api/colecciones/usuario/**").authenticated()
                     .requestMatchers(HttpMethod.GET,"/api/colecciones/**").permitAll()
                     .requestMatchers("/api/partidas/**").permitAll()
                     .anyRequest().authenticated() // El resto requiere JWT

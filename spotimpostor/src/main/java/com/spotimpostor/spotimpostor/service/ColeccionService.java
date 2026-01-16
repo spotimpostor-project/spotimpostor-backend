@@ -9,6 +9,7 @@ import com.spotimpostor.spotimpostor.dto.mapper.ColeccionMapper;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
 import com.spotimpostor.spotimpostor.exception.NotFoundException;
 import com.spotimpostor.spotimpostor.repository.ColeccionRepository;
@@ -23,6 +24,7 @@ import com.spotimpostor.spotimpostor.dto.mapper.PalabraMapper;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.spotimpostor.spotimpostor.domain.enums.TipoColeccion.GENERAL;
@@ -39,13 +41,29 @@ public class ColeccionService {
   private final ColeccionMapper mapper;
 
   public List<String> findColeccionesGenerales() {
-    List<Coleccion> coleccions = coleccionRepository.findByTipo(GENERAL);
+    return coleccionRepository.findNombresByTipo(GENERAL);
+    /*List<Coleccion> coleccions = coleccionRepository.findByTipo(GENERAL);
     return coleccions.stream().map(Coleccion::getNombre).collect(Collectors.toList());
+     */
   }
 
+  //TODO: CHECK QUANTITY OF LOGS
   public List<BuscarColeccionPublicaResponse> findColeccionesPublicas() {
     List<Coleccion> coleccions = coleccionRepository.findByTipo(PUBLICA);
     return coleccions.stream().map(mapper::mapColeccionPublica).collect(Collectors.toList());
+  }
+
+  public List<BuscarMisColeccionesResponse> findMisColecciones(String correoUsuario) {
+
+    Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
+            .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
+
+    List<ColeccionUsuario> coleccionesUsuario = coleccionUsuarioRepository
+            .findWithColeccionByUsuario(usuario);
+
+    return coleccionesUsuario.stream()
+            .map(mapper::mapMiColeccion)
+            .toList();
   }
 
   public InfoColeccionPublicaResponse getDetalleColeccionUsuario(String codigo) {
@@ -60,9 +78,6 @@ public class ColeccionService {
             .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
 
     Coleccion coleccion = mapper.buildColeccion(dtoRequest.getNombreColeccion());
-
-    //String codigo = generarCodigo();
-
     ColeccionUsuario coleccionUsuario = mapper.buildColeccionUsuario(coleccion, usuario, generarCodigo());
 
     coleccion.setColeccionUsuario(coleccionUsuario);
@@ -122,11 +137,6 @@ public class ColeccionService {
 
   //TODO
   /*
-  - Registrar Coleccion: Requiere nombre, codigo (autogenerado), usuario, Lista de palabras (minimo 2)
-  ** No hay pistas aqui
-
-  - Realmente la pista forma un primary key compuesto?
-
   - Cambiar visibilidad de la coleccion
 
   - Registrar palabras

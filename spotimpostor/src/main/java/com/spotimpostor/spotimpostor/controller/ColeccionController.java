@@ -3,6 +3,7 @@ package com.spotimpostor.spotimpostor.controller;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
 import com.spotimpostor.spotimpostor.service.ColeccionService;
 import com.spotimpostor.spotimpostor.util.ApiResponse;
@@ -40,8 +41,13 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta de colecciones exitosa", "200", colecciones));
   }
 
-  //TODO
-  //MOSTRAR "MIS COLECCIONES" -> LOGICA DE LOGIN EN CASO CONTRARIO
+  @GetMapping("/usuario/mis-colecciones")
+  public ResponseEntity<ApiResponse<List<BuscarMisColeccionesResponse>>> consultarMisColecciones (
+    Authentication authentication
+  ) {
+    List<BuscarMisColeccionesResponse> misColecciones = coleccionService.findMisColecciones(authentication.getName());
+    return ResponseEntity.ok(new ApiResponse<>("Consulta exitosa de mis colecciones", "200", misColecciones));
+  }
 
   @GetMapping("/{codigo}")
   public ResponseEntity<ApiResponse<InfoColeccionPublicaResponse>> consultarDetalleColeccionUsuario(

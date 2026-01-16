@@ -7,6 +7,7 @@ import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,14 @@ public class ColeccionMapper {
             .codigo(coleccionUsuario.getCodigo())
             .creador(coleccionUsuario.getUsuario().getNombre())
             .palabras(coleccionUsuario.getColeccion().getPalabras().stream().map(Palabra::getPalabra).toList())
+            .build();
+  }
+
+  public BuscarMisColeccionesResponse mapMiColeccion(ColeccionUsuario coleccionUsuario) {
+    return BuscarMisColeccionesResponse.builder()
+            .nombre(coleccionUsuario.getColeccion().getNombre())
+            .codigo(coleccionUsuario.getCodigo())
+            .visibilidad(coleccionUsuario.getColeccion().getTipo())
             .build();
   }
 
