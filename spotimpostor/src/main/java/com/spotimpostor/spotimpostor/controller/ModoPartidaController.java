@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/modos_partida")
+@RequestMapping("/api/modos-partida")
 @RequiredArgsConstructor
 public class ModoPartidaController {
 

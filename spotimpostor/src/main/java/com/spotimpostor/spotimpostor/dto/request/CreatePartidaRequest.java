@@ -35,9 +35,11 @@ public class CreatePartidaRequest {
   @Positive(message = "Debe ser una cantidad positiva")
   private Integer cantidadImpostores;
 
+  /*
   @Email
   //@NotBlank(message = "Correo de usuario obligatorio")
   private String correo;
+   */
 
   @NotEmpty(message = "Lista de jugadores obligatoria")
   private List<String> jugadores;

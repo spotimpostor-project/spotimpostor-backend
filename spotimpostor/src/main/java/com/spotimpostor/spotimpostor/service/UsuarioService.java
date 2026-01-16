@@ -1,5 +1,6 @@
 package com.spotimpostor.spotimpostor.service;
 
+import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.dto.mapper.UsuarioMapper;
 import com.spotimpostor.spotimpostor.dto.request.CambiarPasswordRequest;
 import com.spotimpostor.spotimpostor.dto.request.CambiarUsernameRequest;
@@ -11,6 +12,7 @@ import com.spotimpostor.spotimpostor.exception.NotFoundException;
 import com.spotimpostor.spotimpostor.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UsuarioService {
 
   private final UsuarioRepository usuarioRepository;
+  private final PasswordEncoder passwordEncoder;
 
   @Transactional
   public InfoUsuarioResponse getUser(String correo) {
@@ -33,9 +36,15 @@ public class UsuarioService {
     if (usuarioRepository.existsByNombre(dtoRequest.getNombre()) || usuarioRepository.existsByCorreo(dtoRequest.getCorreo())) {
       throw new ConflictException("Nombre y(o) correo inválido");
     }
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    String hashedPsw = encoder.encode(dtoRequest.getPassword());
+    // BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    String hashedPsw = passwordEncoder.encode(dtoRequest.getPassword());
     return UsuarioMapper.mapUsuario(usuarioRepository.save(UsuarioMapper.buildUsuario(dtoRequest, hashedPsw)));
+  }
+
+  // Este método ahora es útil para el login en el controlador
+  public Usuario obtenerEntidadPorCorreo(String correo) {
+    return usuarioRepository.findByCorreo(correo)
+            .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
   }
 
   @Transactional
@@ -53,8 +62,8 @@ public class UsuarioService {
 
   @Transactional
   public InfoUsuarioResponse updatePassword(CambiarPasswordRequest dtoRequest) {
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    String hashedPsw = encoder.encode(dtoRequest.getPassword());
+    // BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    String hashedPsw = passwordEncoder.encode(dtoRequest.getPassword());
     usuarioRepository.updatePassword(hashedPsw, dtoRequest.getCorreo());
     return getUser(dtoRequest.getCorreo());
   }

@@ -1,15 +1,20 @@
 package com.spotimpostor.spotimpostor.controller;
 
+import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.dto.request.CambiarPasswordRequest;
 import com.spotimpostor.spotimpostor.dto.request.CambiarUsernameRequest;
 import com.spotimpostor.spotimpostor.dto.request.CreateUsuarioRequest;
 import com.spotimpostor.spotimpostor.dto.request.ConsultarUsuarioRequest;
 import com.spotimpostor.spotimpostor.dto.response.InfoUsuarioResponse;
+import com.spotimpostor.spotimpostor.dto.response.LoginResponse;
+import com.spotimpostor.spotimpostor.service.JwtService;
 import com.spotimpostor.spotimpostor.service.UsuarioService;
 import com.spotimpostor.spotimpostor.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,23 +27,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UsuarioController {
 
+  private final AuthenticationManager authenticationManager;
   private final UsuarioService usuarioService;
+  private final JwtService jwtService;
 
-  @PostMapping
-  public ResponseEntity<ApiResponse<InfoUsuarioResponse>> registrar(
+  @PostMapping("/auth/register")
+  public ResponseEntity<ApiResponse<String>> registrar(
     @Valid @RequestBody CreateUsuarioRequest createUsuarioRequest
   ) {
-    InfoUsuarioResponse infoUsuarioResponse = usuarioService.registerUser(createUsuarioRequest);
-    return ResponseEntity.ok(new ApiResponse<>("Se registró el usuario exitosamente", "200", infoUsuarioResponse));
-    //return new ResponseEntity<>(infoUsuarioResponse, HttpStatus.CREATED);
+    usuarioService.registerUser(createUsuarioRequest);
+
+    var user = usuarioService.obtenerEntidadPorCorreo(createUsuarioRequest.getCorreo());
+    String jwtToken = jwtService.generateToken(user);
+
+    //InfoUsuarioResponse infoUsuarioResponse = usuarioService.registerUser(createUsuarioRequest);
+    return ResponseEntity.ok(new ApiResponse<>("Se registró el usuario exitosamente", "200", jwtToken));
   }
 
-  @GetMapping("/validar")
-  public ResponseEntity<ApiResponse<Boolean>> validar(
+  @PostMapping("/auth/login")
+  public ResponseEntity<ApiResponse<LoginResponse>> login(
     @Valid @RequestBody ConsultarUsuarioRequest consultarUsuarioRequest
   ) {
-    Boolean valido = usuarioService.validarUser(consultarUsuarioRequest);
-    return ResponseEntity.ok(new ApiResponse<>("Autenticación exitosa", "200", valido));
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+                consultarUsuarioRequest.getCorreo(),
+                consultarUsuarioRequest.getPassword()
+        )
+    );
+
+    Usuario user = usuarioService.obtenerEntidadPorCorreo(consultarUsuarioRequest.getCorreo());
+    String jwtToken = jwtService.generateToken(user);
+
+    //Boolean valido = usuarioService.validarUser(consultarUsuarioRequest);
+    return ResponseEntity.ok(new ApiResponse<>("Autenticación exitosa", "200",
+            LoginResponse.builder().token(jwtToken).nombre(user.getNombre()).build()));
     //return new ResponseEntity<>(valido, HttpStatus.OK);
   }
 
