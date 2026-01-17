@@ -7,7 +7,9 @@ import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
 import com.spotimpostor.spotimpostor.dto.mapper.ColeccionMapper;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
+import com.spotimpostor.spotimpostor.dto.request.PalabraDTO;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
+import com.spotimpostor.spotimpostor.dto.request.UpdateColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
 import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
@@ -24,6 +26,7 @@ import com.spotimpostor.spotimpostor.dto.mapper.PalabraMapper;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -53,6 +56,7 @@ public class ColeccionService {
     return coleccions.stream().map(mapper::mapColeccionPublica).collect(Collectors.toList());
   }
 
+  @Transactional
   public List<BuscarMisColeccionesResponse> findMisColecciones(String correoUsuario) {
 
     Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
@@ -64,6 +68,11 @@ public class ColeccionService {
     return coleccionesUsuario.stream()
             .map(mapper::mapMiColeccion)
             .toList();
+  }
+
+  public List<PalabraDTO> getPalabrasMiColeccion(String codigo) {
+    return coleccionUsuarioRepository.getPalabrasByCodigo(codigo).stream()
+            .map(PalabraMapper::mapPalabraDTO).toList();
   }
 
   public InfoColeccionPublicaResponse getDetalleColeccionUsuario(String codigo) {
@@ -92,6 +101,7 @@ public class ColeccionService {
     return mapper.mapSpecificColeccionPublica(coleccionUsuario);
   }
 
+  @Transactional
   public InfoColeccionPublicaResponse updateVisibilidad(CambiarVisibilidadRequest dtoRequest) {
     Coleccion coleccion = coleccionRepository.findByCodigo(dtoRequest.getCodigo())
             .orElseThrow(() -> new NotFoundException("No se encontró colección con código "+dtoRequest.getCodigo()));
@@ -102,8 +112,60 @@ public class ColeccionService {
     return getDetalleColeccionUsuario(dtoRequest.getCodigo());
   }
 
+  @Transactional
+  public BuscarMisColeccionesResponse updateColeccion(UpdateColeccionRequest dtoRequest, String correo, String codigo) {
+    ColeccionUsuario coleccionUsuario = coleccionUsuarioRepository.findByUsuarioCorreoAndCodigo(correo, codigo)
+            .orElseThrow(() -> new NotFoundException("No tienes permiso para editar la colección"));
 
+    Coleccion coleccion = coleccionUsuario.getColeccion();
 
+    coleccion.setNombre(dtoRequest.getNombre());
+    coleccion.setTipo(dtoRequest.getVisibilidad());
+
+    sincronizarPalabras(coleccion, dtoRequest.getPalabras());
+
+    coleccionRepository.save(coleccion);
+    return BuscarMisColeccionesResponse.builder()
+            .nombre(dtoRequest.getNombre())
+            .visibilidad(dtoRequest.getVisibilidad())
+            .codigo(codigo)
+            .build();
+  }
+
+  /*
+  private Boolean esCreadorColeccion(String correo, String codigo) {
+    return coleccionUsuarioRepository.existsByUsuarioCorreoAndCodigo(correo, codigo);
+  }
+  */
+
+  private void sincronizarPalabras(Coleccion coleccion, List<PalabraDTO> palabrasDTO) {
+    // 1. Palabras actuales -> Map de acceso rápido
+    Map<Long, Palabra> palabrasActuales = coleccion.getPalabras().stream()
+            .collect(Collectors.toMap(Palabra::getId, p -> p));
+
+    // 2. Lista final de palabras
+    List<Palabra> listaFinal = new ArrayList<>();
+
+    for (PalabraDTO dto : palabrasDTO) {
+      if (dto.getId() != null && palabrasActuales.containsKey(dto.getId())) {
+        // ACTUALIZAR EXISTENTE
+        Palabra p = palabrasActuales.get(dto.getId());
+        p.setPalabra(dto.getPalabra());
+        listaFinal.add(p);
+      } else {
+        // AGREGAR NUEVA
+        Palabra nueva = Palabra.builder()
+                .palabra(dto.getPalabra())
+                .coleccion(coleccion)
+                .build();
+        listaFinal.add(nueva);
+      }
+    }
+
+    // 3. Limpiar y reemplazar
+    coleccion.getPalabras().clear();
+    coleccion.getPalabras().addAll(listaFinal);
+  }
 
   private static final String ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   private static final SecureRandom RANDOM = new SecureRandom();
@@ -123,9 +185,6 @@ public class ColeccionService {
 
     return nuevoCodigo;
   }
-
-
-
 
   /*
   public List<String> consultarPorTipo(String tipo) {

@@ -2,6 +2,7 @@ package com.spotimpostor.spotimpostor.repository;
 
 
 import com.spotimpostor.spotimpostor.domain.entity.ColeccionUsuario;
+import com.spotimpostor.spotimpostor.domain.entity.Palabra;
 import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,10 @@ public interface ColeccionUsuarioRepository extends JpaRepository<ColeccionUsuar
           "JOIN FETCH cu.coleccion " +
           "WHERE cu.usuario = :usuario")
   List<ColeccionUsuario> findWithColeccionByUsuario(@Param("usuario") Usuario usuario);
+
+  @Query("SELECT p FROM ColeccionUsuario cu JOIN cu.coleccion c "+
+          "JOIN c.palabras p WHERE cu.codigo = :codigo")
+  List<Palabra> getPalabrasByCodigo(@Param("codigo") String codigo);
+
+  Optional<ColeccionUsuario> findByUsuarioCorreoAndCodigo(String correo, String codigo);
 }

@@ -1,7 +1,9 @@
 package com.spotimpostor.spotimpostor.controller;
 
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
+import com.spotimpostor.spotimpostor.dto.request.PalabraDTO;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
+import com.spotimpostor.spotimpostor.dto.request.UpdateColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
 import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
@@ -49,6 +51,14 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta exitosa de mis colecciones", "200", misColecciones));
   }
 
+  @GetMapping("/usuario/mis-colecciones/{codigo}")
+  public ResponseEntity<ApiResponse<List<PalabraDTO>>> consultarDetallesMiColeccion (
+          @PathVariable String codigo
+  ) {
+    List<PalabraDTO> palabraDTO = coleccionService.getPalabrasMiColeccion(codigo);
+    return ResponseEntity.ok(new ApiResponse<>("Consulta exitosa de mis colecciones", "200", palabraDTO));
+  }
+
   @GetMapping("/{codigo}")
   public ResponseEntity<ApiResponse<InfoColeccionPublicaResponse>> consultarDetalleColeccionUsuario(
     @PathVariable String codigo
@@ -69,6 +79,16 @@ public class ColeccionController {
 
     InfoColeccionPublicaResponse coleccionPublicaResponse = coleccionService.registerColeccion(dtoRequest, correo);
     return ResponseEntity.ok(new ApiResponse<>("Registro exitoso", "200", coleccionPublicaResponse));
+  }
+
+  @PatchMapping("/usuario/{codigo}")
+  public ResponseEntity<ApiResponse<BuscarMisColeccionesResponse>> actualizar(
+          @Valid @RequestBody UpdateColeccionRequest dtoRequest,
+          @PathVariable String codigo,
+          Authentication authentication
+  ) {
+    BuscarMisColeccionesResponse response = coleccionService.updateColeccion(dtoRequest, authentication.getName(), codigo);
+    return ResponseEntity.ok(new ApiResponse<>("Actualizacion exitosa", "200", response));
   }
 
   @PatchMapping("/tipo")
