@@ -3,11 +3,13 @@ package com.spotimpostor.spotimpostor.service;
 import com.spotimpostor.spotimpostor.domain.entity.Coleccion;
 import com.spotimpostor.spotimpostor.domain.entity.ModoPartida;
 import com.spotimpostor.spotimpostor.domain.entity.Palabra;
-import com.spotimpostor.spotimpostor.domain.entity.PalabraPista;
+import com.spotimpostor.spotimpostor.domain.entity.Partida;
 import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
 import com.spotimpostor.spotimpostor.dto.mapper.PartidaMapper;
 import com.spotimpostor.spotimpostor.dto.request.CreatePartidaRequest;
+import com.spotimpostor.spotimpostor.dto.request.UpdatePartidaRequest;
+import com.spotimpostor.spotimpostor.dto.response.InfoJugadoresPartidaResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoPartidaResponse;
 import com.spotimpostor.spotimpostor.dto.response.PalabrasResponse;
 import com.spotimpostor.spotimpostor.exception.NotFoundException;
@@ -24,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -40,7 +41,7 @@ public class PartidaService {
   private final PalabraPistaRepository palabraPistaRepository;
 
   @Transactional
-  public List<InfoPartidaResponse> registrarPartida(CreatePartidaRequest dtoRequest, String correo) {
+  public InfoPartidaResponse registrarPartida(CreatePartidaRequest dtoRequest, String correo) {
     Coleccion coleccion = (dtoRequest.getTipoColeccion() == TipoColeccion.GENERAL) ?
             coleccionRepository.findByNombre(dtoRequest.getNombreColeccion())
                     .orElseThrow(() -> new NotFoundException("No se encontró la colección"))
@@ -62,7 +63,7 @@ public class PartidaService {
     ModoPartida modo = modoPartidaRepository.findByModo(dtoRequest.getModo())
             .orElseThrow(() -> new NotFoundException("No se encontró el modo de juego: "+dtoRequest.getModo()));
 
-    partidaRepository.save(PartidaMapper.buildPartida(dtoRequest, usuario, coleccion, modo));
+    Partida partida = partidaRepository.save(PartidaMapper.buildPartida(dtoRequest, usuario, coleccion, modo));
 
     PalabrasResponse palabrasResponse = getPalabrasAleatorias(dtoRequest.getTipoColeccion(), coleccion);
 
@@ -76,17 +77,27 @@ public class PartidaService {
     List<Integer> indicesImpostores = indicesAleatorios.subList(0, dtoRequest.getCantidadImpostores());
 
     // Mapear la lista original al DTO de respuesta usando el índice original
-    return IntStream.range(0, dtoRequest.getCantidadJugadores())
+    List<InfoJugadoresPartidaResponse> listaJugadores = IntStream.range(0, dtoRequest.getCantidadJugadores())
             .mapToObj(i -> {
               boolean esImpostor = indicesImpostores.contains(i);
 
-              return InfoPartidaResponse.builder()
+              return InfoJugadoresPartidaResponse.builder()
                       .jugador(dtoRequest.getJugadores().get(i)) // Mantiene el orden original
                       .rol(esImpostor ? "Impostor" : "Civil")
                       .palabra(esImpostor ? palabrasResponse.getPista().toUpperCase() : palabrasResponse.getPalabra().toUpperCase())
                       .build();
             })
-            .collect(Collectors.toList());
+            .toList();
+
+    return InfoPartidaResponse.builder()
+            .idPartida(partida.getId())
+            .rolesJugadores(listaJugadores)
+            .build();
+  }
+
+  public void actualizarPartida(UpdatePartidaRequest dtoRequest) {
+    partidaRepository.updatePartidaResultados(dtoRequest.getIdPartida(),
+            dtoRequest.getDuracion(), dtoRequest.getEsVictoria());
   }
 
   public PalabrasResponse getPalabrasAleatorias(TipoColeccion tipoColeccion, Coleccion coleccion) {
@@ -106,11 +117,4 @@ public class PartidaService {
             .pista(textoPista)
             .build();
   }
-
-  //TODO
-  //1. El tamaño de la lista de jugadores debe coincidir con lo que se ha definido, o cambiará el diseño en ese sentido?
-  //   Tal vez se maneje por el length de la Lista de jugadores
-
-  //2. El frontend recibe toda la informacion de los jugadores y sus roles, se debe tener cuidado para cubrirlo
-
 }

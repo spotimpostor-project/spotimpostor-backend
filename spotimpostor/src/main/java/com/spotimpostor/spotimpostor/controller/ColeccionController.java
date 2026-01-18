@@ -43,7 +43,7 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta de colecciones exitosa", "200", colecciones));
   }
 
-  @GetMapping("/usuario/mis-colecciones")
+  @GetMapping("/usuario")
   public ResponseEntity<ApiResponse<List<BuscarMisColeccionesResponse>>> consultarMisColecciones (
     Authentication authentication
   ) {
@@ -51,7 +51,7 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta exitosa de mis colecciones", "200", misColecciones));
   }
 
-  @GetMapping("/usuario/mis-colecciones/{codigo}")
+  @GetMapping("/usuario/{codigo}")
   public ResponseEntity<ApiResponse<List<PalabraDTO>>> consultarDetallesMiColeccion (
           @PathVariable String codigo
   ) {
@@ -70,15 +70,15 @@ public class ColeccionController {
   //TODO: Si esta privado no ver detalles
 
   @PostMapping
-  public ResponseEntity<ApiResponse<InfoColeccionPublicaResponse>> registrar(
+  public ResponseEntity<ApiResponse<BuscarMisColeccionesResponse>> registrar(
     @Valid @RequestBody RegistrarColeccionRequest dtoRequest,
     Authentication authentication
   ) {
     //String correo = (authentication != null) ? authentication.getName() : null;
     String correo = authentication.getName();
 
-    InfoColeccionPublicaResponse coleccionPublicaResponse = coleccionService.registerColeccion(dtoRequest, correo);
-    return ResponseEntity.ok(new ApiResponse<>("Registro exitoso", "200", coleccionPublicaResponse));
+    BuscarMisColeccionesResponse response = coleccionService.registerColeccion(dtoRequest, correo);
+    return ResponseEntity.ok(new ApiResponse<>("Registro exitoso", "200", response));
   }
 
   @PatchMapping("/usuario/{codigo}")

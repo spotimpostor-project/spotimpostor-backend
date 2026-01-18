@@ -80,8 +80,9 @@ public class ColeccionService {
             .orElseThrow(() -> new NotFoundException("No se encontró colección con código "+codigo)));
   }
 
+  //TODO: REGISTRAR TIMESTAMP DE CREACION
   @Transactional
-  public InfoColeccionPublicaResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
+  public BuscarMisColeccionesResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
 
     Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
             .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
@@ -98,7 +99,7 @@ public class ColeccionService {
 
     coleccionRepository.save(coleccion);
 
-    return mapper.mapSpecificColeccionPublica(coleccionUsuario);
+    return mapper.mapMiColeccion(coleccionUsuario);
   }
 
   @Transactional
