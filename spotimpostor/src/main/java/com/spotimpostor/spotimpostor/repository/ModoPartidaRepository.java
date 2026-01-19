@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface ModoPartidaRepository extends JpaRepository<ModoPartida, Integer> {
-
   Optional<ModoPartida> findByModo(String modo);
 }

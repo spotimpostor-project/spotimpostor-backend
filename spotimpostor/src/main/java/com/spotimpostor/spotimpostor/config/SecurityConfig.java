@@ -35,6 +35,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/usuarios/auth/**").permitAll() // Login y Registro son libres
                     .requestMatchers("/api/modos-partida/**").permitAll()
+                    .requestMatchers("/api/colecciones/comunidad/**").permitAll()
+                    .requestMatchers("/api/colecciones/usuario/**").authenticated()
                     .requestMatchers(HttpMethod.GET,"/api/colecciones/**").permitAll()
                     .requestMatchers("/api/partidas/**").permitAll()
                     .anyRequest().authenticated() // El resto requiere JWT
@@ -61,7 +63,7 @@ public class SecurityConfig {
      */
 
     configuration.setAllowedOriginPatterns(Arrays.asList("https://*.vercel.app", "http://localhost:5173"));
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
     configuration.setAllowCredentials(true);
 

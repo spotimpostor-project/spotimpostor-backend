@@ -22,7 +22,7 @@ import lombok.Setter;
 public class ModoPartida {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
   @Column(length = 10, nullable = false)

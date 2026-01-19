@@ -30,7 +30,7 @@ import java.util.List;
 public class Palabra {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column(length = 30, nullable = false)

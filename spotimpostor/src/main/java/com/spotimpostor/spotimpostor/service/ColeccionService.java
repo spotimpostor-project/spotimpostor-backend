@@ -6,10 +6,16 @@ import com.spotimpostor.spotimpostor.domain.entity.Palabra;
 import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
 import com.spotimpostor.spotimpostor.dto.mapper.ColeccionMapper;
+import com.spotimpostor.spotimpostor.dto.request.BusquedaColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
+import com.spotimpostor.spotimpostor.dto.request.PalabraDTO;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
-import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.request.UpdateColeccionRequest;
+import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionUsuarioResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.exception.BadRequestException;
+import com.spotimpostor.spotimpostor.exception.ForbiddenException;
 import com.spotimpostor.spotimpostor.exception.NotFoundException;
 import com.spotimpostor.spotimpostor.repository.ColeccionRepository;
 import com.spotimpostor.spotimpostor.repository.ColeccionUsuarioRepository;
@@ -23,6 +29,8 @@ import com.spotimpostor.spotimpostor.dto.mapper.PalabraMapper;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.spotimpostor.spotimpostor.domain.enums.TipoColeccion.GENERAL;
@@ -39,13 +47,63 @@ public class ColeccionService {
   private final ColeccionMapper mapper;
 
   public List<String> findColeccionesGenerales() {
-    List<Coleccion> coleccions = coleccionRepository.findByTipo(GENERAL);
+    return coleccionRepository.findNombresByTipo(GENERAL);
+    /*List<Coleccion> coleccions = coleccionRepository.findByTipo(GENERAL);
     return coleccions.stream().map(Coleccion::getNombre).collect(Collectors.toList());
+     */
   }
 
-  public List<BuscarColeccionPublicaResponse> findColeccionesPublicas() {
-    List<Coleccion> coleccions = coleccionRepository.findByTipo(PUBLICA);
-    return coleccions.stream().map(mapper::mapColeccionPublica).collect(Collectors.toList());
+  @Transactional
+  public List<BuscarColeccionUsuarioResponse> findColeccionesUsuarios(BusquedaColeccionRequest dto) {
+    List<ColeccionUsuario> colecciones = switch (dto.getTipoBusqueda()) {
+      case "Nombre" -> "Popular".equals(dto.getTipoOrden())
+              ? coleccionUsuarioRepository.buscarPorNombrePopularidad(dto.getQuery())
+              : coleccionUsuarioRepository.buscarPorNombreReciente(dto.getQuery());
+      case "Código" -> coleccionUsuarioRepository.findByCodigo(dto.getCodigo())
+              .map(cu -> {
+                if (cu.getColeccion().getTipo() == TipoColeccion.PRIVADA) {
+                  throw new ForbiddenException("La colección es privada");
+                }
+                return List.of(cu);
+              })
+              .orElseThrow(() -> new NotFoundException("No se encuentra la colección con código "+dto.getCodigo()));
+
+      /*{
+
+        ColeccionUsuario coleccion = coleccionUsuarioRepository.findByCodigo(dto.getCodigo())
+                        .orElseThrow(() -> new NotFoundException("No se encuentra la colección con código "+dto.getCodigo()));
+
+        if (Objects.equals(coleccion.getColeccion().getTipo(), TipoColeccion.PRIVADA)) {
+          yield new ArrayList<>();
+        } else {
+          yield List.of(coleccion);
+        }
+      }
+
+       */
+      default -> List.of();
+    };
+
+    return colecciones.stream().map(mapper::mapColeccionPublica).toList();
+  }
+
+  @Transactional
+  public List<BuscarMisColeccionesResponse> findMisColecciones(String correoUsuario) {
+
+    Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
+            .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
+
+    List<ColeccionUsuario> coleccionesUsuario = coleccionUsuarioRepository
+            .findWithColeccionByUsuario(usuario);
+
+    return coleccionesUsuario.stream()
+            .map(mapper::mapMiColeccion)
+            .toList();
+  }
+
+  public List<PalabraDTO> getPalabrasMiColeccion(String codigo) {
+    return coleccionUsuarioRepository.getPalabrasByCodigo(codigo).stream()
+            .map(PalabraMapper::mapPalabraDTO).toList();
   }
 
   public InfoColeccionPublicaResponse getDetalleColeccionUsuario(String codigo) {
@@ -54,15 +112,12 @@ public class ColeccionService {
   }
 
   @Transactional
-  public InfoColeccionPublicaResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
+  public BuscarMisColeccionesResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
 
     Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
             .orElseThrow(() -> new NotFoundException("No se encontró usuario con correo "+correoUsuario));
 
     Coleccion coleccion = mapper.buildColeccion(dtoRequest.getNombreColeccion());
-
-    //String codigo = generarCodigo();
-
     ColeccionUsuario coleccionUsuario = mapper.buildColeccionUsuario(coleccion, usuario, generarCodigo());
 
     coleccion.setColeccionUsuario(coleccionUsuario);
@@ -74,9 +129,10 @@ public class ColeccionService {
 
     coleccionRepository.save(coleccion);
 
-    return mapper.mapSpecificColeccionPublica(coleccionUsuario);
+    return mapper.mapMiColeccion(coleccionUsuario);
   }
 
+  @Transactional
   public InfoColeccionPublicaResponse updateVisibilidad(CambiarVisibilidadRequest dtoRequest) {
     Coleccion coleccion = coleccionRepository.findByCodigo(dtoRequest.getCodigo())
             .orElseThrow(() -> new NotFoundException("No se encontró colección con código "+dtoRequest.getCodigo()));
@@ -87,8 +143,60 @@ public class ColeccionService {
     return getDetalleColeccionUsuario(dtoRequest.getCodigo());
   }
 
+  @Transactional
+  public BuscarMisColeccionesResponse updateColeccion(UpdateColeccionRequest dtoRequest, String correo, String codigo) {
+    ColeccionUsuario coleccionUsuario = coleccionUsuarioRepository.findByUsuarioCorreoAndCodigo(correo, codigo)
+            .orElseThrow(() -> new NotFoundException("No tienes permiso para editar la colección"));
 
+    Coleccion coleccion = coleccionUsuario.getColeccion();
 
+    coleccion.setNombre(dtoRequest.getNombre());
+    coleccion.setTipo(dtoRequest.getVisibilidad());
+
+    sincronizarPalabras(coleccion, dtoRequest.getPalabras());
+
+    coleccionRepository.save(coleccion);
+    return BuscarMisColeccionesResponse.builder()
+            .nombre(dtoRequest.getNombre())
+            .visibilidad(dtoRequest.getVisibilidad())
+            .codigo(codigo)
+            .build();
+  }
+
+  /*
+  private Boolean esCreadorColeccion(String correo, String codigo) {
+    return coleccionUsuarioRepository.existsByUsuarioCorreoAndCodigo(correo, codigo);
+  }
+  */
+
+  private void sincronizarPalabras(Coleccion coleccion, List<PalabraDTO> palabrasDTO) {
+    // 1. Palabras actuales -> Map de acceso rápido
+    Map<Long, Palabra> palabrasActuales = coleccion.getPalabras().stream()
+            .collect(Collectors.toMap(Palabra::getId, p -> p));
+
+    // 2. Lista final de palabras
+    List<Palabra> listaFinal = new ArrayList<>();
+
+    for (PalabraDTO dto : palabrasDTO) {
+      if (dto.getId() != null && palabrasActuales.containsKey(dto.getId())) {
+        // ACTUALIZAR EXISTENTE
+        Palabra p = palabrasActuales.get(dto.getId());
+        p.setPalabra(dto.getPalabra());
+        listaFinal.add(p);
+      } else {
+        // AGREGAR NUEVA
+        Palabra nueva = Palabra.builder()
+                .palabra(dto.getPalabra())
+                .coleccion(coleccion)
+                .build();
+        listaFinal.add(nueva);
+      }
+    }
+
+    // 3. Limpiar y reemplazar
+    coleccion.getPalabras().clear();
+    coleccion.getPalabras().addAll(listaFinal);
+  }
 
   private static final String ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   private static final SecureRandom RANDOM = new SecureRandom();
@@ -109,9 +217,6 @@ public class ColeccionService {
     return nuevoCodigo;
   }
 
-
-
-
   /*
   public List<String> consultarPorTipo(String tipo) {
     List<Coleccion> coleccions = coleccionRepository.findByTipo(tipo);
@@ -122,11 +227,6 @@ public class ColeccionService {
 
   //TODO
   /*
-  - Registrar Coleccion: Requiere nombre, codigo (autogenerado), usuario, Lista de palabras (minimo 2)
-  ** No hay pistas aqui
-
-  - Realmente la pista forma un primary key compuesto?
-
   - Cambiar visibilidad de la coleccion
 
   - Registrar palabras

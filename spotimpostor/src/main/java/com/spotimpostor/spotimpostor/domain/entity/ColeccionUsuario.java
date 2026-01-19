@@ -15,6 +15,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "colecciones_usuarios")
@@ -41,4 +44,7 @@ public class ColeccionUsuario {
   @Column(length = 7, nullable = false, unique = true)
   private String codigo;
 
+  @CreationTimestamp
+  @Column(name = "fecha_creacion", nullable = false)
+  private LocalDateTime fechaCreacion;
 }

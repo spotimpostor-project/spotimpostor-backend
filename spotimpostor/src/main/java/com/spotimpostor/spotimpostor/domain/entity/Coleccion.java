@@ -46,6 +46,6 @@ public class Coleccion {
   @PrimaryKeyJoinColumn
   private ColeccionUsuario coleccionUsuario;
 
-  @OneToMany(mappedBy = "coleccion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "coleccion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Palabra> palabras;
 }
