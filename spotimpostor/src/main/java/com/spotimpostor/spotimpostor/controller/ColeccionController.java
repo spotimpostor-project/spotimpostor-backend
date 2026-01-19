@@ -1,10 +1,11 @@
 package com.spotimpostor.spotimpostor.controller;
 
+import com.spotimpostor.spotimpostor.dto.request.BusquedaColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
 import com.spotimpostor.spotimpostor.dto.request.PalabraDTO;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.request.UpdateColeccionRequest;
-import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionUsuarioResponse;
 import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
 import com.spotimpostor.spotimpostor.service.ColeccionService;
@@ -12,7 +13,6 @@ import com.spotimpostor.spotimpostor.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,9 +37,11 @@ public class ColeccionController {
     return ResponseEntity.ok(new ApiResponse<>("Consulta de colecciones exitosa", "200", colecciones));
   }
 
-  @GetMapping("/comunidad")
-  public ResponseEntity<ApiResponse<List<BuscarColeccionPublicaResponse>>> consultarColeccionPublica () {
-    List<BuscarColeccionPublicaResponse> colecciones = coleccionService.findColeccionesPublicas();
+  @PostMapping("/comunidad")
+  public ResponseEntity<ApiResponse<List<BuscarColeccionUsuarioResponse>>> consultarColeccionUsuario(
+    @RequestBody @Valid BusquedaColeccionRequest dto
+  ) {
+    List<BuscarColeccionUsuarioResponse> colecciones = coleccionService.findColeccionesUsuarios(dto);
     return ResponseEntity.ok(new ApiResponse<>("Consulta de colecciones exitosa", "200", colecciones));
   }
 

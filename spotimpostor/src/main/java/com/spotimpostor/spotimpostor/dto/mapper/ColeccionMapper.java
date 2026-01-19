@@ -5,22 +5,20 @@ import com.spotimpostor.spotimpostor.domain.entity.ColeccionUsuario;
 import com.spotimpostor.spotimpostor.domain.entity.Palabra;
 import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
-import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
-import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionUsuarioResponse;
 import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Component
 public class ColeccionMapper {
 
-  public BuscarColeccionPublicaResponse mapColeccionPublica(Coleccion coleccion) {
-    return BuscarColeccionPublicaResponse.builder()
-            .nombre(coleccion.getNombre())
-            .codigo(coleccion.getColeccionUsuario().getCodigo())
+  public BuscarColeccionUsuarioResponse mapColeccionPublica(ColeccionUsuario coleccionUsuario) {
+    return BuscarColeccionUsuarioResponse.builder()
+            .nombre(coleccionUsuario.getColeccion().getNombre())
+            .codigo(coleccionUsuario.getCodigo())
+            .autor(coleccionUsuario.getUsuario().getNombre())
+            .visibilidad(coleccionUsuario.getColeccion().getTipo())
             .build();
   }
 
@@ -49,10 +47,10 @@ public class ColeccionMapper {
   }
 
   public ColeccionUsuario buildColeccionUsuario(Coleccion coleccion, Usuario usuario, String codigo) {
-    ColeccionUsuario coleccionUsuario = new ColeccionUsuario();
-    coleccionUsuario.setColeccion(coleccion);
-    coleccionUsuario.setUsuario(usuario);
-    coleccionUsuario.setCodigo(codigo);
-    return coleccionUsuario;
+    return ColeccionUsuario.builder()
+            .coleccion(coleccion)
+            .usuario(usuario)
+            .codigo(codigo)
+            .build();
   }
 }

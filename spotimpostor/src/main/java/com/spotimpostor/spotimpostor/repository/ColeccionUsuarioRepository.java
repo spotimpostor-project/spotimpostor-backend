@@ -27,4 +27,28 @@ public interface ColeccionUsuarioRepository extends JpaRepository<ColeccionUsuar
   List<Palabra> getPalabrasByCodigo(@Param("codigo") String codigo);
 
   Optional<ColeccionUsuario> findByUsuarioCorreoAndCodigo(String correo, String codigo);
+
+  @Query(value = """
+              SELECT cu.* 
+              FROM vista_colecciones_publicas v
+              INNER JOIN colecciones_usuarios cu ON v.codigo = cu.codigo
+              ORDER BY 
+                  v.nombre <-> :query,
+                  v.total_partidas DESC
+              LIMIT 20
+          """, nativeQuery = true)
+  List<ColeccionUsuario> buscarPorNombrePopularidad(@Param("query") String query);
+
+  @Query(value = """
+              SELECT cu.*
+              FROM colecciones_usuarios cu
+              INNER JOIN colecciones c
+              	ON c.id = cu.id_coleccion
+              WHERE c.tipo = 'PUBLICA'
+              ORDER BY 
+                  c.nombre <-> :query, 
+                  cu.fecha_creacion desc
+              LIMIT 20
+          """, nativeQuery = true)
+  List<ColeccionUsuario> buscarPorNombreReciente(@Param("query") String query);
 }

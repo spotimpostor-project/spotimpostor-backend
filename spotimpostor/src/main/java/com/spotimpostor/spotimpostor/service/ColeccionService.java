@@ -6,13 +6,16 @@ import com.spotimpostor.spotimpostor.domain.entity.Palabra;
 import com.spotimpostor.spotimpostor.domain.entity.Usuario;
 import com.spotimpostor.spotimpostor.domain.enums.TipoColeccion;
 import com.spotimpostor.spotimpostor.dto.mapper.ColeccionMapper;
+import com.spotimpostor.spotimpostor.dto.request.BusquedaColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.request.CambiarVisibilidadRequest;
 import com.spotimpostor.spotimpostor.dto.request.PalabraDTO;
 import com.spotimpostor.spotimpostor.dto.request.RegistrarColeccionRequest;
 import com.spotimpostor.spotimpostor.dto.request.UpdateColeccionRequest;
-import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.dto.response.BuscarColeccionUsuarioResponse;
 import com.spotimpostor.spotimpostor.dto.response.BuscarMisColeccionesResponse;
 import com.spotimpostor.spotimpostor.dto.response.InfoColeccionPublicaResponse;
+import com.spotimpostor.spotimpostor.exception.BadRequestException;
+import com.spotimpostor.spotimpostor.exception.ForbiddenException;
 import com.spotimpostor.spotimpostor.exception.NotFoundException;
 import com.spotimpostor.spotimpostor.repository.ColeccionRepository;
 import com.spotimpostor.spotimpostor.repository.ColeccionUsuarioRepository;
@@ -27,7 +30,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.spotimpostor.spotimpostor.domain.enums.TipoColeccion.GENERAL;
@@ -50,10 +53,38 @@ public class ColeccionService {
      */
   }
 
-  //TODO: CHECK QUANTITY OF LOGS
-  public List<BuscarColeccionPublicaResponse> findColeccionesPublicas() {
-    List<Coleccion> coleccions = coleccionRepository.findByTipo(PUBLICA);
-    return coleccions.stream().map(mapper::mapColeccionPublica).collect(Collectors.toList());
+  @Transactional
+  public List<BuscarColeccionUsuarioResponse> findColeccionesUsuarios(BusquedaColeccionRequest dto) {
+    List<ColeccionUsuario> colecciones = switch (dto.getTipoBusqueda()) {
+      case "Nombre" -> "Popular".equals(dto.getTipoOrden())
+              ? coleccionUsuarioRepository.buscarPorNombrePopularidad(dto.getQuery())
+              : coleccionUsuarioRepository.buscarPorNombreReciente(dto.getQuery());
+      case "Código" -> coleccionUsuarioRepository.findByCodigo(dto.getCodigo())
+              .map(cu -> {
+                if (cu.getColeccion().getTipo() == TipoColeccion.PRIVADA) {
+                  throw new ForbiddenException("La colección es privada");
+                }
+                return List.of(cu);
+              })
+              .orElseThrow(() -> new NotFoundException("No se encuentra la colección con código "+dto.getCodigo()));
+
+      /*{
+
+        ColeccionUsuario coleccion = coleccionUsuarioRepository.findByCodigo(dto.getCodigo())
+                        .orElseThrow(() -> new NotFoundException("No se encuentra la colección con código "+dto.getCodigo()));
+
+        if (Objects.equals(coleccion.getColeccion().getTipo(), TipoColeccion.PRIVADA)) {
+          yield new ArrayList<>();
+        } else {
+          yield List.of(coleccion);
+        }
+      }
+
+       */
+      default -> List.of();
+    };
+
+    return colecciones.stream().map(mapper::mapColeccionPublica).toList();
   }
 
   @Transactional
@@ -80,7 +111,6 @@ public class ColeccionService {
             .orElseThrow(() -> new NotFoundException("No se encontró colección con código "+codigo)));
   }
 
-  //TODO: REGISTRAR TIMESTAMP DE CREACION
   @Transactional
   public BuscarMisColeccionesResponse registerColeccion(RegistrarColeccionRequest dtoRequest, String correoUsuario) {
 
