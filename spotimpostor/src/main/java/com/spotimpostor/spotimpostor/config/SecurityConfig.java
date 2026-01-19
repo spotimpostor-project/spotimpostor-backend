@@ -33,6 +33,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable) // Desactiva la protección contra ataques cruzados (obligatorio para Postman)
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/health").permitAll()
                     .requestMatchers("/api/usuarios/auth/**").permitAll() // Login y Registro son libres
                     .requestMatchers("/api/modos-partida/**").permitAll()
                     .requestMatchers("/api/colecciones/comunidad/**").permitAll()
